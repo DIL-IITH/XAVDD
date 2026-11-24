@@ -144,3 +144,23 @@ bash evaluate_syn_data_vgg10k.sh 0 \
 ```
 
 For additional CLI options, run `python3 <script>.py --help` after installing dependencies.
+
+
+## 📝 Citation
+
+If you find this work useful, please consider citing:
+
+```bibtex
+@inproceedings{
+mohanty2026xavdd,
+title={X-{AVDD}: Cross-Attentive Audio-Visual Dataset Distillation},
+author={Saumyaranjan Mohanty and Aravind Reddy and Konda Reddy Mopuri},
+booktitle={The Fortieth Annual Conference on Neural Information Processing Systems},
+year={2026},
+url={https://openreview.net/forum?id=MzMWvUkNZw}
+}
+```
+
+## 🙏 Acknowledgments
+
+This codebase uses dataset released by [AVDD][https://github.com/sakshamsingh1/AVDD]. We thank the authors for making their work publicly available.
