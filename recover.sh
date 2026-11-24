@@ -1,0 +1,13 @@
+CUDA_VISIBLE_DEVICES=$1 python3 -W ignore recover.py \
+--dataset $2 \
+--model $3 \
+--arch_path $4 \
+--cpc $5 \
+--batch_size $6 \
+--start_class_id $7 \
+--cpc_start $8 \
+--iteration 1000 \
+--lr 0.01 \
+--device cuda:0 \
+--attn_multiplier $9 \
+--wandb 0
