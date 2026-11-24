@@ -11,7 +11,7 @@ CUDA_VISIBLE_DEVICES=$1 python3 -W ignore evaluate_syn_data.py \
 --syn_data_path syn_data/vgg10k/$3/syn_av_init_attn/ \
 --ipc $ipc \
 --soft_label 1 \
---iterations 3 \
+--iterations 5 \
 --alpha $alpha \
 --temperature $temperature \
 --type ours 
