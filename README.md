@@ -56,3 +56,91 @@ For example, for VGG10K using ConvNet on GPU 0:
 ```bash
 bash launch_program.sh 0 vgg10k convnet
 ```
+
+## 4. Pipeline stages
+
+The following commands reproduce the stages in `launch_program.sh` for VGG10K/ConvNet using GPU 0.
+### Step 1: Train the BiXAttn teacher network
+Train the teacher used for dataset synthesis on the original training dataset. The model uses modality-specific encoders and bidirectional cross-attention blocks.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 train_teacher_network.py \
+    --dataset vgg10k --device cuda:0 --model convnet \
+    --batch_size 128 --lr 0.001 --epochs 100 \
+    --fusion ensemble --with_cross_attn
+```
+
+Output: `pretrained/vgg10k/convnet/teacher_model_bixattn.pt`
+
+### Step 2: Train the teacher network for soft labels
+Train a separate audio-visual teacher without cross-attention for student supervision during evaluation.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 train_teacher_network.py \
+    --dataset vgg10k --device cuda:0 --model convnet \
+    --batch_size 128 --lr 0.001 --epochs 100 --fusion ensemble
+```
+
+Output: `pretrained/vgg10k/convnet/teacher_model_wo_attn.pt`
+
+### Step 3: Extract class-wise embeddings
+Use the frozen BiXAttn teacher to extract patch embeddings and cross-attended embeddings from the real training dataset.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 obtain_embeddings.py \
+    --dataset vgg10k --model convnet --device cuda:0 --batch_size 128 \
+    --arch_path pretrained/vgg10k/convnet/teacher_model_bixattn.pt
+```
+
+Outputs:
+
+```text
+patch_embeddings/vgg10k/convnet/{audio,video}/class<ID>.pt
+attended_embeddings/vgg10k/convnet/{audio,video}/class<ID>.pt
+```
+
+### Step 4: Obtain initialization data
+
+Sample paired real audio-visual examples per class to initialize the synthetic data.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 obtain_init_data.py --dataset vgg10k
+```
+
+Outputs:
+
+```text
+init_data/vgg10k/audio/tensor_<ID>.pt
+init_data/vgg10k/frame/tensor_<ID>.pt
+```
+
+### Step 5: Generate the distilled dataset
+
+Optimize synthetic audio and visual inputs using the frozen BiXAttn teacher. 
+
+```bash
+bash launch_synthesis_vgg10k.sh 0
+```
+
+Synthetic data is saved as paired PNG visual samples and PyTorch audio tensors:
+
+```text
+syn_data/vgg10k/convnet/syn_av_init_attn/
+├── new000/
+│   ├── class000_id000.png
+│   ├── class000_id000.pt
+│   └── ...
+├── new001/
+└── ... (through new009)
+```
+
+### Step 6: Evaluate the distilled dataset
+
+Train student networks without cross-attention on the synthetic dataset and evaluate them on the original test split. The teacher without cross-attention provides soft targets during training.
+
+```bash
+bash evaluate_syn_data_vgg10k.sh 0 \
+    pretrained/vgg10k/convnet/teacher_model_wo_attn.pt convnet 0.0
+```
+
+For additional CLI options, run `python3 <script>.py --help` after installing dependencies.
